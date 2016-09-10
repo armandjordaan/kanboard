@@ -86,6 +86,62 @@ class UserViewController extends BaseController
     }
 
     /**
+     * Edit timesheet entry
+     *
+     * @access public
+     */
+    public function edit_Timesheet()
+    {
+        $record = $this->subtaskTimeTrackingModel->getTimesheetEntry($this->request->getIntegerParam('subtask_time_tracking_id'));
+
+        if (empty($record)) {
+            throw new PageNotFoundException();
+        }
+        
+        $record = $this->dateParser->format($record, array('start'), $this->dateParser->getUserDateTimeFormat());
+        $record = $this->dateParser->format($record, array('end'),   $this->dateParser->getUserDateTimeFormat());
+        
+        $this->response->html($this->helper->layout->user('user_view/edit_timesheet', array(
+            'record' => $record,
+        )));
+    }
+    
+    /**
+     * Update timesheet entry
+     *
+     * @access public
+     */    
+    public function update()
+    {
+        $user = $this->getUser();
+        
+        // update the timesheet entry        
+        $id = $this->request->getIntegerParam('subtask_time_tracking_id');
+        $values = $this->request->getValues();
+        
+        $start_dt = $values['start'];
+        $end_dt   = $values['end'];
+        
+        //$start_dt = $this->request->getStringParam('start');
+        //$end_dt = $this->request->getStringParam('end');
+        
+        $this->logger->info('Start: '.$start_dt);
+        $this->logger->info('end: '.$end_dt);
+        
+        if ($this->subtaskTimeTrackingModel->updateSubTask($id, $user['id'], $start_dt, $end_dt))
+        {
+            $this->flash->success(t('Time entry updated successfully.'));            
+        }
+        else 
+        {
+            $this->flash->failure(t('Unable to update time entry.'));
+        }
+        
+        return $this->response->redirect($this->helper->url->to('UserViewController', 'timesheet', 
+                array('user_id' => $user['id'])));        
+    }
+    
+    /**
      * Display last connections
      *
      * @access public

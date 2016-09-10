@@ -121,6 +121,18 @@ class SubtaskController extends BaseController
     }
 
     /**
+     * Recalculate the subtask times from timesheet entries
+     *
+     * @access public
+     */
+    public function recalcsubtasktime()
+    {
+        $task = $this->getTask();
+        
+        return $this->response->redirect($this->helper->url->to('TaskViewController', 'show', array('project_id' => $task['project_id'], 'task_id' => $task['id'])), true);
+    }
+    
+    /**
      * Confirmation dialog before removing a subtask
      *
      * @access public

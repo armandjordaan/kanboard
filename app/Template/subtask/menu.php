@@ -13,5 +13,9 @@
             <i class="fa fa-clone" aria-hidden="true"></i>
             <?= $this->url->link(t('Convert to task'), 'SubtaskConverterController', 'show', array('task_id' => $task['id'], 'project_id' => $task['project_id'], 'subtask_id' => $subtask['id']), false, 'popover') ?>
         </li>
+        <li>
+            <i class="fa fa-cog" aria-hidden="true"></i>
+            <?= $this->url->link(t('Recalculate spent time from timesheets'), 'SubtaskController', 'recalcsubtasktime', array('task_id' => $task['id'], 'project_id' => $task['project_id'], 'subtask_id' => $subtask['id']), false, 'popover') ?>
+        </li>
     </ul>
 </div>

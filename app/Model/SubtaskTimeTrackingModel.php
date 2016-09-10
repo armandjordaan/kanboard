@@ -100,6 +100,38 @@ class SubtaskTimeTrackingModel extends Base
     }
 
     /**
+     * Get query for task timesheet entry
+     *
+     * @access public
+     * @param  integer    $task_id    Task id
+     * @return \PicoDb\Table
+     */
+    public function getTimesheetEntry($task_id)
+    {
+        return $this->db
+                    ->table(self::TABLE)
+                    ->columns(
+                        self::TABLE.'.id',
+                        self::TABLE.'.subtask_id',
+                        self::TABLE.'.end',
+                        self::TABLE.'.start',
+                        self::TABLE.'.time_spent',
+                        self::TABLE.'.user_id',
+                        SubtaskModel::TABLE.'.task_id',
+                        SubtaskModel::TABLE.'.title AS subtask_title',
+                        TaskModel::TABLE.'.title AS task_title',
+                        TaskModel::TABLE.'.project_id',
+                        UserModel::TABLE.'.username',
+                        UserModel::TABLE.'.name AS user_fullname'
+                    )
+                    ->join(SubtaskModel::TABLE, 'id', 'subtask_id')
+                    ->join(TaskModel::TABLE, 'id', 'task_id', SubtaskModel::TABLE)
+                    ->join(UserModel::TABLE, 'id', 'user_id', self::TABLE)
+                    ->eq(self::TABLE.'.id', $task_id)
+                    ->findOne();
+    }
+    
+    /**
      * Get query for project timesheet (pagination)
      *
      * @access public
@@ -225,6 +257,42 @@ class SubtaskTimeTrackingModel extends Base
                     ));
     }
 
+    /**
+     * Update subtask times
+     *
+     * @access public
+     * @param  integer   $subtask_id
+     * @param  integer   $user_id
+     * @return boolean
+     */
+    public function updateSubTask($subtask_id, $user_id, $start_time, $end_time)
+    {
+        $st = new DateTime($start_time);
+        $et = new DateTime($end_time);
+        
+        $time_spent = $this->dateParser->getHours($st, $et);
+
+        if ($time_spent > 0) {
+            $this->updateSubtaskTimeSpent($subtask_id, $time_spent);
+        }
+        
+        $this->logger->info('time spent: '.$time_spent);
+        
+        $result = $this->db
+                    ->table(self::TABLE)
+                    ->eq('id', $subtask_id)
+                    ->eq('user_id', $user_id)
+                    ->update(array(
+                        'start' => $st->getTimestamp(),
+                        'end' => $et->getTimestamp(),
+                        'time_spent' => $time_spent,
+                    ));
+        
+        $this->logger->info('sql query result: '.$result);
+        
+        return $result;
+    }
+    
     /**
      * Calculate the time spent when the clock is stopped
      *
